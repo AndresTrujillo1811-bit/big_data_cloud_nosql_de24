@@ -205,4 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# dbt
 .06_containerize_with_docker/data_transformation/dbt_packages/dbt_utils
+.dbt_packages/dbt_utils
+.dbt 

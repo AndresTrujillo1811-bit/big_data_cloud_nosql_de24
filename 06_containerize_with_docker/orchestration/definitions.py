@@ -15,7 +15,6 @@ DUCKDB_PATH = os.getenv("DUCKDB_PATH")
 DBT_PROFILES_DIR = os.getenv("DBT_PROFILES_DIR")
 
 
-
 # dlt Asset 
 dlt_resource = DagsterDltResource() 
 @dlt_assets(
@@ -41,3 +40,23 @@ dbt_project.prepare_if_dev()
 @dbt_assets(manifest=dbt_project.manifest_path,) #access metadata of dbt project so that dagster understand structure of the dbt project
 def dbt_models(context: dg.AssetExecutionContext, dbt: DbtCliResource):
     yield from dbt.cli(["build"], context=context).stream() #compile the project and collect all results    
+    
+    
+
+# Job
+job_dlt = dg.define_asset_job("job_dlt", selection=dg.AssetSelection.keys("dlt_jobads_source_jobads_resource"))
+job_dbt = dg.define_asset_job("job_dbt", selection=dg.AssetSelection.key_prefixes("warehouse", "marts"))
+
+
+# Schedule
+schedule_dlt = dg.ScheduleDefinition(job=job_dlt, cron_schedule="25 11 * * *") #UTC
+
+
+# Sensor 
+@dg.asset_sensor(asset_key=dg.AssetKey("dlt_jobads_source_jobads_resource"), job_name="job_dbt")
+def dlt_load_sensor():
+    yield dg.RunRequest()
+    
+    
+# Definitions 
+defs = dg.Definitions(assets=[dlt_load, dbt_models], resources={"dlt": dlt_resource, "dbt": dbt_resource}, jobs=[job_dlt, job_dbt], schedules=[schedule_dlt], sensors=[dlt_load_sensor],)        
