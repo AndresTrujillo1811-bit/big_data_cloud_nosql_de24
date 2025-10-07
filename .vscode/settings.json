@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./06_containerize_with_docker/data_extract_load"
+    ]
+}
